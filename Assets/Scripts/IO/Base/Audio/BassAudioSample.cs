@@ -1,4 +1,4 @@
-﻿using MajdataPlay.Extensions;
+using MajdataPlay.Extensions;
 using MajdataPlay.Numerics;
 using ManagedBass;
 using ManagedBass.Fx;
@@ -237,6 +237,7 @@ namespace MajdataPlay.IO
             {
                 if (decode == 0)
                 {
+                    MajDebug.LogError(Bass.LastError);
                     throw new NotSupportedException();
                 }
                 Bass.LastError.EnsureSuccessStatusCode();
@@ -267,8 +268,9 @@ namespace MajdataPlay.IO
 
                 return sample;
             }
-            catch
+            catch (Exception e)
             {
+                MajDebug.LogException(e);
                 if (handle is not null)
                 {
                     ((GCHandle)handle).Free();
