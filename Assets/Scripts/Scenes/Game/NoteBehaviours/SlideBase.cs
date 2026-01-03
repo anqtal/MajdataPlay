@@ -432,9 +432,13 @@ namespace MajdataPlay.Scenes.Game.Notes.Behaviours
         protected virtual void TooLateJudge()
         {
             if (QueueRemaining == 1)
+            {
                 _judgeResult = JudgeGrade.LateGood;
+            }
             else
+            {
                 _judgeResult = JudgeGrade.Miss;
+            }
             ConvertJudgeGrade(ref _judgeResult);
             _isJudged = true;
         }
