@@ -59,7 +59,7 @@ namespace MajdataPlay.Scenes.Result
             _isInited = true;
             _score = score;
             _onlineDetail = onlineDetail;
-            infotext.text = "THUMBUP_INFO".i18n();
+            infotext.text = "MAJTEXT_THUMBUP_INFO".i18n();
         }
         void Update()
         {

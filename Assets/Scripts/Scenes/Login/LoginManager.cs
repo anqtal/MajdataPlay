@@ -328,7 +328,27 @@ namespace MajdataPlay.Scenes.Login
                             if (!rsp.IsSuccessfully)
                             {
                                 MajDebug.LogError($"Login failed:\nStatusCode:{rsp.StatusCode}\nErrorCode:{rsp.ErrorCode}\nMessage:{rsp.Message}");
-                                _errText.text = $"Login failed:\n{rsp.Message.i18n()}";
+                                var errMsg = string.Empty;
+                                switch(rsp.ErrorCode)
+                                {
+                                    case HttpErrorCode.Timeout:
+                                        errMsg = "MAJTEXT_LOGIN_CONNECT_TIMEOUT";
+                                        break;
+                                    case HttpErrorCode.InvalidRequest:
+                                        errMsg = rsp.Message;
+                                        break;
+                                    default:
+                                        if (rsp.StatusCode is HttpStatusCode.Unauthorized)
+                                        {
+                                            errMsg = "MAJTEXT_ONLINE_USERNAME_OR_PASSWORD_INCORRECT";
+                                        }
+                                        else
+                                        {
+                                            errMsg = "MAJTEXT_LOGIN_UNKNOWN_ERROR";
+                                        }
+                                        break;
+                                }
+                                _errText.text = $"{"MAJTEXT_LOGIN_LOGIN_FAILED".i18n()}:\n{errMsg.i18n()}";
                                 continue;
                             }
                             else
