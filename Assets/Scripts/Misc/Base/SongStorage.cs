@@ -393,7 +393,7 @@ namespace MajdataPlay
                 MajDebug.LogDebug($"[MaiChart Scanner][{thisDir.Name}]Enter folder: {songDir.Name}");
                 var files = songDir.GetFiles();
                 var maidataFile = files.FirstOrDefault(o => o.Name is "maidata.txt");
-                var trackFile = files.FirstOrDefault(o => o.Name is "track.mp3" or "track.ogg");
+                var trackFile = files.FirstOrDefault(o => o.Name is "track.opus" or "track.mp3" or "track.ogg" or "track.aac");
 
                 if (maidataFile is null || trackFile is null)
                 {
