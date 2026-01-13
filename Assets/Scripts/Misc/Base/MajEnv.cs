@@ -1,7 +1,9 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using HidSharp.Platform.Windows;
 using LibVLCSharp;
+using MajdataPlay.Buffers;
 using MajdataPlay.Extensions;
+using MajdataPlay.Net;
 using MajdataPlay.Numerics;
 using MajdataPlay.Settings;
 using MajdataPlay.Settings.Runtime;
@@ -12,6 +14,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -28,7 +31,7 @@ namespace MajdataPlay
         public const int HIDDEN_LAYER = 3;
         public const int HTTP_BUFFER_SIZE = 8192;
         public const int HTTP_REQUEST_MAX_RETRY = 4;
-        public const int HTTP_TIMEOUT_MS = 8000;
+        public const int HTTP_TIMEOUT_MS = 10000;
         public const float FRAME_LENGTH_SEC = 1f / 60;
         public const float FRAME_LENGTH_MSEC = FRAME_LENGTH_SEC * 1000;
 
@@ -250,6 +253,33 @@ namespace MajdataPlay
                 else
                 {
                     Settings = setting;
+                    using var buffer = new RentedList<ApiEndpoint>();
+                    for (var i = 0; i < Settings.Online.ApiEndpoints.Length; i++)
+                    {
+                        var apiEndpoint = Settings.Online.ApiEndpoints[i];
+                        var uri = apiEndpoint.Url;
+                        if(uri is null || string.IsNullOrEmpty(apiEndpoint.Name))
+                        {
+                            continue;
+                        }
+                        if (uri.OriginalString.LastOrDefault() != '/')
+                        {
+                            apiEndpoint = new()
+                            {
+                                Name = apiEndpoint.Name,
+                                Url = new Uri(uri.OriginalString + "/"),
+                                Username = apiEndpoint.Username,
+                                Password = apiEndpoint.Password,
+                            };
+                        }
+                        apiEndpoint.RuntimeConfig.AuthUsername = apiEndpoint.Username;
+                        apiEndpoint.RuntimeConfig.AuthPassword = apiEndpoint.Password;
+                        buffer.Add(apiEndpoint);
+                    }
+                    Settings.Online.ApiEndpoints = buffer.GroupBy(x => x.Url)
+                                                         .Select(x => x.FirstOrDefault())
+                                                         .Where(x => x is not null)
+                                                         .ToArray();
                     //Reset Mod option after reboot
                     //Settings.Mod = new ModOptions();
                 }
@@ -333,7 +363,7 @@ namespace MajdataPlay
             else
             {
                 _httpClientHandler.UseProxy = false;
-                _httpClientHandler.Proxy = null;
+                //_httpClientHandler.Proxy = null;
             }
         PROXY_CONFIG_EXIT:
 #endif

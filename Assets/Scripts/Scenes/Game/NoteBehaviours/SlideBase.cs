@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using MajdataPlay.Collections;
 using MajdataPlay.Extensions;
 using MajdataPlay.IO;
@@ -424,15 +424,21 @@ namespace MajdataPlay.Scenes.Game.Notes.Behaviours
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected sealed override void PlayJudgeSFX(in NoteJudgeResult judgeResult)
         {
-            if (judgeResult.IsBreak && !judgeResult.IsMissOrTooFast)
+            if (judgeResult.IsBreak && judgeResult.Grade == JudgeGrade.Perfect)
+            {
                 _audioEffMana.PlayBreakSlideEndSound();
+            }
         }
         protected virtual void TooLateJudge()
         {
             if (QueueRemaining == 1)
+            {
                 _judgeResult = JudgeGrade.LateGood;
+            }
             else
+            {
                 _judgeResult = JudgeGrade.Miss;
+            }
             ConvertJudgeGrade(ref _judgeResult);
             _isJudged = true;
         }

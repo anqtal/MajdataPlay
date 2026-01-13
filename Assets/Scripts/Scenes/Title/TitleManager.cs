@@ -53,7 +53,7 @@ namespace MajdataPlay.Scenes.Title
             echoText.text = $"{Localization.GetLocalizedText("MAJTEXT_LOADING_SCORE_STORAGE")}...";
             await UniTask.DelayFrame(9);
             var task1 = ScoreManager.InitAsync().AsValueTask();
-            while(!task1.IsCompleted)
+            while (!task1.IsCompleted)
             {
                 await UniTask.Yield();
             }
@@ -72,7 +72,7 @@ namespace MajdataPlay.Scenes.Title
                 await UniTask.Yield();
             }
 
-            echoText.text = $"{Localization.GetLocalizedText("MAJTEXT_SCANNING_CHARTS")}...";
+            echoText.text = $"{"MAJTEXT_SCANNING_CHARTS".i18n()}...";
             var task3 = StartScanningChart();
             try
             {
@@ -89,35 +89,35 @@ namespace MajdataPlay.Scenes.Title
                     {
                         if (task3.IsFaulted)
                         {
-                            echoText.text = Localization.GetLocalizedText("MAJTEXT_SCAN_CHARTS_FAILED");
+                            echoText.text = "MAJTEXT_SCAN_CHARTS_FAILED".i18n();
                             MajDebug.LogException(task3.Exception);
                         }
                         else if (SongStorage.IsEmpty)
                         {
                             isEmpty = true;
-                            echoText.text = Localization.GetLocalizedText("MAJTEXT_NO_CHART");
+                            echoText.text = "MAJTEXT_NO_CHART".i18n();
                         }
                         else
                         {
-                            if (MajInstances.Settings.Online.Enable)
-                            {
-                                foreach (var endpoint in MajInstances.Settings.Online.ApiEndpoints)
-                                {
-                                    try
-                                    {
-                                        if (endpoint.Username is null || endpoint.Password is null) continue;
-                                        echoText.text = "Login " + endpoint.Name + " as " + endpoint.Username;
-                                        await Online.Login(endpoint);
-                                        await UniTask.Delay(1000);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        MajDebug.LogError(ex);
-                                        echoText.text = "Login failed for " + endpoint.Name;
-                                        await UniTask.Delay(1000);
-                                    }
-                                }
-                            }
+                            //if (MajInstances.Settings.Online.Enable)
+                            //{
+                            //    foreach (var endpoint in MajInstances.Settings.Online.ApiEndpoints)
+                            //    {
+                            //        try
+                            //        {
+                            //            if (endpoint.Username is null || endpoint.Password is null) continue;
+                            //            echoText.text = "Login " + endpoint.Name + " as " + endpoint.Username;
+                            //            await Online.LoginAsync(endpoint);
+                            //            await UniTask.Delay(1000);
+                            //        }
+                            //        catch (Exception ex)
+                            //        {
+                            //            MajDebug.LogError(ex);
+                            //            echoText.text = "Login failed for " + endpoint.Name;
+                            //            await UniTask.Delay(1000);
+                            //        }
+                            //    }
+                            //}
                             echoText.text = "MAJTEXT_PRESS_ANY_KEY".i18n();
                             InputManager.BindAnyArea(OnAreaDown);
 
@@ -144,11 +144,11 @@ namespace MajdataPlay.Scenes.Title
             TextAsset paths = Resources.Load<TextAsset>("StreamingAssetPaths");
             string fs = paths.text;
             MajDebug.LogInfo(fs);
-            string[] fLines = fs.Replace("\\","/").Split("\n");
+            string[] fLines = fs.Replace("\\", "/").Split("\n");
             foreach (string line in fLines)
             {
                 if (line.Trim().Length <= 1) continue;
-                var path = Path.Combine( Application.streamingAssetsPath, line.Trim());
+                var path = Path.Combine(Application.streamingAssetsPath, line.Trim());
                 echoText.text = $"Extracting {path}...";
                 MajDebug.LogInfo($"Extracting {path}");
                 yield return new WaitForEndOfFrame();
@@ -177,7 +177,7 @@ namespace MajdataPlay.Scenes.Title
         async Task StartScanningChart()
         {
             var progress = new Progress<string>();
-            progress.ProgressChanged += (o,e) =>
+            progress.ProgressChanged += (o, e) =>
             {
                 echoText.text = e;
             };
@@ -195,7 +195,7 @@ namespace MajdataPlay.Scenes.Title
                 if (dirId != Guid.Empty)
                 {
                     var dirIndex = Array.FindIndex(SongStorage.Collections, x => x.Id == dirId);
-                    if(dirIndex != -1)
+                    if (dirIndex != -1)
                     {
                         listConfig.SelectedDir = dirIndex;
                         isDirMatched = true;
@@ -210,7 +210,7 @@ namespace MajdataPlay.Scenes.Title
                 if (isDirMatched && !string.IsNullOrEmpty(selectedSongHash))
                 {
                     selectedIndex = Array.FindIndex(selectedCollection.ToArray(), x => x.Hash == selectedSongHash);
-                    if(selectedIndex == -1)
+                    if (selectedIndex == -1)
                     {
                         selectedIndex = 0;
                     }
@@ -242,7 +242,7 @@ namespace MajdataPlay.Scenes.Title
                 switch (e.BZone)
                 {
                     case ButtonZone.Test:
-                        if(_flag)
+                        if (_flag)
                         {
                             EnterTestMode();
                         }
@@ -279,7 +279,14 @@ namespace MajdataPlay.Scenes.Title
             _flag = false;
             MajInstances.AudioManager.StopSFX("bgm_title.mp3");
             MajInstances.AudioManager.StopSFX("MajdataPlay.wav");
-            MajInstances.SceneSwitcher.SwitchScene("List", false);
+            if (MajInstances.Settings.Online.Enable)
+            {
+                MajInstances.SceneSwitcher.SwitchScene("Login", false);
+            }
+            else
+            {
+                MajInstances.SceneSwitcher.SwitchScene("List", false);
+            }
         }
     }
 }
