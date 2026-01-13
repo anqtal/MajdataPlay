@@ -56,6 +56,7 @@ namespace MajdataPlay.Scenes.Login
         ApiEndpoint[] _enabledEndpoints = Array.Empty<ApiEndpoint>();
 
         bool _isReady = false;
+        bool _isExited = false;
         readonly static QRCodeGenerator _qrGenerator = new ();
         readonly static Exception _exception = new();
 
@@ -84,7 +85,7 @@ namespace MajdataPlay.Scenes.Login
         }
         void Update()
         {
-            if(!_isReady)
+            if(!_isReady || _isExited)
             {
                 return;
             }
@@ -384,7 +385,48 @@ namespace MajdataPlay.Scenes.Login
                 await sceneSwitcher.FadeInAsync();
                 _isReady = false;
             }
-            sceneSwitcher.SwitchScene("List", false);
+            EnterList();
+        }
+        void EnterList()
+        {
+            if(_isExited)
+            {
+                return;
+            }
+            _isExited = true;
+            if(SceneSwitcher.LastScene == MajScenes.Title)
+            {
+                MajInstances.SceneSwitcher.SwitchScene("List", false);
+                return;
+            }
+            RefreshListBackgroundAsync();
+        }
+        static async void RefreshListBackgroundAsync()
+        {
+            var sceneSwitcher = MajInstances.SceneSwitcher;
+            await sceneSwitcher.FadeInAsync();
+            sceneSwitcher.SwitchScene("Empty", false);
+            await UniTask.Delay(400);
+            var progress = new Progress<string>();
+            progress.ProgressChanged += (o, e) =>
+            {
+                MajInstances.SceneSwitcher.SetLoadingText(e);
+            };
+            var task = SongStorage.RefreshAsync(progress);
+            while (!task.IsCompleted)
+            {
+                await UniTask.Yield();
+            }
+            if (!task.IsCompletedSuccessfully)
+            {
+                sceneSwitcher.SetLoadingText("MAJTEXT_SCAN_CHARTS_FAILED".i18n(), Color.red);
+            }
+            else
+            {
+                sceneSwitcher.SetLoadingText(string.Empty);
+            }
+            await UniTask.Delay(3000);
+            sceneSwitcher.SwitchScene("List");
         }
         async UniTask UpdateApiEndpointRuntimeConfigAsync(ApiEndpoint endpoint, UserSummary? userInfo)
         {
