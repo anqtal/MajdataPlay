@@ -240,7 +240,7 @@ namespace MajdataPlay.Scenes.Game.Notes.Behaviours
 
             if(IsClassic)
             {
-                _bodyCheckRange = CLASSIC_HOLD_BODY_CHECK_RANGE;
+                _bodyCheckRange = new Range<float>(JudgeTiming - TAP_JUDGE_GOOD_AREA_MSEC / 1000, float.MaxValue, ContainsType.Closed);
             }
             else if (Length <= HOLD_HEAD_IGNORE_LENGTH_SEC + HOLD_TAIL_IGNORE_LENGTH_SEC)
             {
@@ -568,6 +568,10 @@ namespace MajdataPlay.Scenes.Game.Notes.Behaviours
             {
                 if (IsClassic)
                 {
+                    if(!_isJudged)
+                    {
+                        return;
+                    }
                     var isButtonReleased = _noteManager.CheckSensorStatusInPreviousFrame(_sensorPos, SwitchStatus.On) && 
                                            !isButtonPressed;
                     var offset = isButtonReleased ? 0 : USERSETTING_TOUCHPANEL_OFFSET_SEC;
