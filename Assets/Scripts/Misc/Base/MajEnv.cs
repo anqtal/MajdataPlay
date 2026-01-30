@@ -221,6 +221,10 @@ namespace MajdataPlay
                 AssetsPath = Path.Combine(Application.persistentDataPath, "ExtStreamingAssets/");
             }
             CachePath = Application.temporaryCachePath;
+#elif UNITY_IOS
+            RootPath = Application.persistentDataPath;
+            AssetsPath = Path.Combine(Application.persistentDataPath, "ExtStreamingAssets/");
+            CachePath = Application.temporaryCachePath;
 #else
             throw new NotImplementedException();
 #endif
