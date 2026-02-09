@@ -57,7 +57,7 @@ namespace MajdataPlay.Scenes.Game.Notes.Controllers
         readonly bool[] _isBtnClickedInThisFrame = new bool[8];
         readonly bool[] _isSensorClickedInThisFrame = new bool[33];
 
-#if UNITY_ANDROID
+#if UNITY_ANDROID || UNITY_IOS
         readonly int[] _sensorClickedCountInThisFrame = new int[33];
         readonly int[] _sensorUsedCountInThisFrame = new int[33];
 
@@ -89,7 +89,7 @@ namespace MajdataPlay.Scenes.Game.Notes.Controllers
             Array.Fill(_sensorStatusInPreviousFrame, SwitchStatus.Off);
             Array.Fill(_isBtnClickedInThisFrame, false);
             Array.Fill(_isSensorClickedInThisFrame, false);
-#if UNITY_ANDROID
+#if UNITY_ANDROID || UNITY_IOS
             Array.Fill(_sensorUsedCountInThisFrame, 0);
 #else
             Array.Fill(_isBtnUsedInThisFrame, false);
@@ -132,7 +132,7 @@ namespace MajdataPlay.Scenes.Game.Notes.Controllers
             }
             for (var i = 0; i < 33; i++)
             {
-#if UNITY_ANDROID
+#if UNITY_ANDROID || UNITY_IOS
                 _sensorUsedCountInThisFrame[i] = 0;
                 _sensorClickedCountInThisFrame[i] = 0;
 #else
@@ -255,7 +255,7 @@ namespace MajdataPlay.Scenes.Game.Notes.Controllers
             Array.Fill(_sensorStatusInNextFrame, SwitchStatus.Off);
             Array.Fill(_sensorStatusInThisFrame, SwitchStatus.Off);
             Array.Fill(_sensorStatusInPreviousFrame, SwitchStatus.Off);
-#if UNITY_ANDROID
+#if UNITY_ANDROID || UNITY_IOS
             Array.Fill(_sensorUsedCountInThisFrame, 0);
 #else
             Array.Fill(_isBtnUsedInThisFrame, false);
@@ -408,7 +408,7 @@ namespace MajdataPlay.Scenes.Game.Notes.Controllers
 
             currentIndex++;
         }
-#if UNITY_ANDROID
+#if UNITY_ANDROID || UNITY_IOS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryUseSensorClickEvent(SensorArea? area)
         {
