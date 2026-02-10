@@ -45,6 +45,8 @@ namespace MajdataPlay
 
 #if UNITY_ANDROID // Android Only (User Agent)
         public static string HTTP_USER_AGENT { get; } = $"MajdataPlay Android/{MajInstances.GameVersion.ToString()}";
+#elif UNITY_IOS // iOS Only (User Agent)
+        public static string HTTP_USER_AGENT { get; } = $"MajdataPlay iOS/{MajInstances.GameVersion.ToString()}";
 #else
         public static string HTTP_USER_AGENT { get; } = $"MajdataPlay/{MajInstances.GameVersion.ToString()}";
 #endif
