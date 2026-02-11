@@ -100,10 +100,112 @@ namespace MajdataPlay.Editor
             var plist = new PlistDocument();
             plist.ReadFromString(File.ReadAllText(plistPath));
             var root = plist.root;
+            
             root.SetBoolean("UIFileSharingEnabled", true);
             root.SetBoolean("LSSupportsOpeningDocumentsInPlace", true);
             root.SetBoolean("UISupportsDocumentBrowser", true);
+
+            
+            string bundleId = PlayerSettings.applicationIdentifier;
+            string adxUti = $"{bundleId}.adx";
+
+            EnsureDocumentType(root,
+                typeName: "Zip Archive",
+                role: "Viewer",
+                contentTypes: new[] { "public.zip-archive" }
+            );
+
+            EnsureDocumentType(root,
+                typeName: "ADX Package",
+                role: "Viewer",
+                contentTypes: new[] { adxUti }
+            );
+
+            
+            EnsureExportedTypeDeclaration(root,
+                identifier: adxUti,
+                description: "ADX Level Package",
+                conformsTo: new[] { "public.zip-archive" },
+                filenameExtensions: new[] { "adx" }
+            );
+
             File.WriteAllText(plistPath, plist.WriteToString());
+        }
+
+        private static void EnsureDocumentType(PlistElementDict root, string typeName, string role, string[] contentTypes)
+        {
+            var arr = root.values.ContainsKey("CFBundleDocumentTypes")
+                ? root["CFBundleDocumentTypes"].AsArray()
+                : root.CreateArray("CFBundleDocumentTypes");
+
+            
+            foreach (var el in arr.values)
+            {
+                var d = el.AsDict();
+                if (d == null) continue;
+
+                if (!d.values.TryGetValue("LSItemContentTypes", out var ctEl)) continue;
+                var ctArr = ctEl.AsArray();
+                if (ctArr == null) continue;
+
+                var existing = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var v in ctArr.values)
+                {
+                    var s = v.AsString();
+                    if (s != null) existing.Add(s);
+                }
+
+                bool match = false;
+                foreach (var ct in contentTypes)
+                {
+                    if (existing.Contains(ct)) { match = true; break; }
+                }
+
+                if (match) return; 
+            }
+
+            
+            var entry = arr.AddDict();
+            entry.SetString("CFBundleTypeName", typeName);
+            entry.SetString("CFBundleTypeRole", role);
+
+            var ctNew = entry.CreateArray("LSItemContentTypes");
+            foreach (var ct in contentTypes) ctNew.AddString(ct);
+        }
+
+        private static void EnsureExportedTypeDeclaration(
+            PlistElementDict root,
+            string identifier,
+            string description,
+            string[] conformsTo,
+            string[] filenameExtensions)
+        {
+            var arr = root.values.ContainsKey("UTExportedTypeDeclarations")
+                ? root["UTExportedTypeDeclarations"].AsArray()
+                : root.CreateArray("UTExportedTypeDeclarations");
+            
+            foreach (var el in arr.values)
+            {
+                var d = el.AsDict();
+                if (d == null) continue;
+                if (d.values.TryGetValue("UTTypeIdentifier", out var idEl))
+                {
+                    var s = idEl.AsString();
+                    if (string.Equals(s, identifier, StringComparison.Ordinal))
+                        return;
+                }
+            }
+
+            var entry = arr.AddDict();
+            entry.SetString("UTTypeIdentifier", identifier);
+            entry.SetString("UTTypeDescription", description);
+
+            var conformsArr = entry.CreateArray("UTTypeConformsTo");
+            foreach (var c in conformsTo) conformsArr.AddString(c);
+
+            var tagSpec = entry.CreateDict("UTTypeTagSpecification");
+            var extArr = tagSpec.CreateArray("public.filename-extension");
+            foreach (var ext in filenameExtensions) extArr.AddString(ext);
         }
 
         private static string ResolveInfoPlistPath(string buildPath, PBXProject proj, string target)
