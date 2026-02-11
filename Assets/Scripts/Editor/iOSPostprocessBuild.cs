@@ -17,6 +17,9 @@ namespace MajdataPlay.Editor
             "@executable_path/Frameworks/bassopus.framework",
         };
 
+        private const string SettingsBundleSourcePath = "Assets/Plugins/iOS/Settings.bundle";
+        private const string SettingsBundleName = "Settings.bundle";
+
         [PostProcessBuild(45)]
         public static void OnPostprocessBuild(BuildTarget buildTarget, string path)
         {
@@ -27,6 +30,7 @@ namespace MajdataPlay.Editor
 
             UpdateRunpathSearchPaths(path);
             UpdateInfoPlist(path);
+            AddSettingsBundle(path);
         }
 
         private static void UpdateRunpathSearchPaths(string path)
@@ -41,10 +45,8 @@ namespace MajdataPlay.Editor
             var proj = new PBXProject();
             proj.ReadFromString(File.ReadAllText(projPath));
 
-
             string mainTarget = proj.GetUnityMainTargetGuid();
             string frameworkTarget = proj.GetUnityFrameworkTargetGuid();
-
 
             AddRunpathSearchPaths(proj, mainTarget);
             if (!string.IsNullOrEmpty(frameworkTarget))
@@ -86,9 +88,7 @@ namespace MajdataPlay.Editor
             var proj = new PBXProject();
             proj.ReadFromString(File.ReadAllText(projPath));
 
-
             string mainTarget = proj.GetUnityMainTargetGuid();
-
 
             string plistPath = ResolveInfoPlistPath(path, proj, mainTarget);
             if (!File.Exists(plistPath))
@@ -126,6 +126,49 @@ namespace MajdataPlay.Editor
             }
 
             return Path.Combine(buildPath, plistPath);
+        }
+
+        private static void AddSettingsBundle(string buildPath)
+        {
+            if (!Directory.Exists(SettingsBundleSourcePath))
+            {
+                return;
+            }
+
+            string destPath = Path.Combine(buildPath, SettingsBundleName);
+
+            if (Directory.Exists(destPath))
+            {
+                FileUtil.DeleteFileOrDirectory(destPath);
+            }
+
+            FileUtil.CopyFileOrDirectory(SettingsBundleSourcePath, destPath);
+
+            string projPath = PBXProject.GetPBXProjectPath(buildPath);
+            if (!File.Exists(projPath))
+            {
+                return;
+            }
+
+            var proj = new PBXProject();
+            proj.ReadFromString(File.ReadAllText(projPath));
+
+            string mainTarget = proj.GetUnityMainTargetGuid();
+            string frameworkTarget = proj.GetUnityFrameworkTargetGuid();
+
+            string fileGuid = proj.AddFile(SettingsBundleName, SettingsBundleName, PBXSourceTree.Source);
+
+            if (!string.IsNullOrEmpty(mainTarget))
+            {
+                proj.AddFileToBuild(mainTarget, fileGuid);
+            }
+
+            if (!string.IsNullOrEmpty(frameworkTarget))
+            {
+                proj.AddFileToBuild(frameworkTarget, fileGuid);
+            }
+
+            File.WriteAllText(projPath, proj.WriteToString());
         }
     }
 }
