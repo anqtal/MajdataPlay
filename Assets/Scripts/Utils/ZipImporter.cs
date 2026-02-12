@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace MajdataPlay.Utils
@@ -98,9 +99,9 @@ namespace MajdataPlay.Utils
                     try { File.Delete(tempFilePath); }
                     catch (Exception e) { MajDebug.LogWarning("[ZipImporter] Delete temp failed: " + e.Message); }
                 }
-                
+                ReloadList(folderName).Forget();
                 OnPackageExtracted?.Invoke(outDir);
-                MajInstances.SceneSwitcher.SwitchScene("Title");
+                
             }
             catch (Exception e)
             {
@@ -108,6 +109,38 @@ namespace MajdataPlay.Utils
                 
                 try { Directory.Delete(outDir, true); } catch { /* ignore */ }
             }
+        }
+
+        private async static UniTask ReloadList(string folderName)
+        {
+            await MajInstances.SceneSwitcher.FadeInAsync();
+            MajInstances.SceneSwitcher.SwitchScene("Empty", false);
+            await UniTask.Delay(100);
+            // var bTasks = WaitForBackgroundTaskSuspendAsync();
+            // while(!bTasks.IsCompleted)
+            // {
+            //     await UniTask.Yield();
+            // }
+            var progress = new Progress<string>();
+            progress.ProgressChanged += (o, e) =>
+            {
+                MajInstances.SceneSwitcher.SetLoadingText($"Importing {folderName}...\n"+e);
+            };
+            var task = SongStorage.RefreshLocalAsync(progress);
+            while(!task.IsCompleted)
+            {
+                await UniTask.Yield();
+            }
+            if (!task.IsCompletedSuccessfully)
+            {
+                MajInstances.SceneSwitcher.SetLoadingText("MAJTEXT_SCAN_CHARTS_FAILED".i18n(), Color.red);
+            }
+            else
+            {
+                MajInstances.SceneSwitcher.SetLoadingText(string.Empty);
+            }
+            await UniTask.Delay(3000);
+            MajInstances.SceneSwitcher.SwitchScene("List");
         }
 
         
