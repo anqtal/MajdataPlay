@@ -813,7 +813,15 @@ namespace MajdataPlay
                         var currentHash = SHA256.Create().ComputeHash(fileStream);
                         if (fileSHA256 != Convert.ToBase64String(currentHash))
                         {
-                            continue;
+                            MajDebug.LogWarning($"Hash mismatch for online resource\nOrigin: {fileSHA256}\nLocal: {currentHash}");
+                            if (i == MajEnv.HTTP_REQUEST_MAX_RETRY)
+                            {
+                                throw new HttpException(uri.OriginalString, HttpErrorCode.IntegrityCheckFailed);
+                            }
+                            else
+                            {
+                                continue;
+                            }
                         }
                     }
                     File.Create(cacheFlagPath).Dispose();
@@ -882,7 +890,7 @@ namespace MajdataPlay
                         }
                         else
                         {
-                            if (rsp.Headers.TryGetValues("hash", out var values))
+                            if (rsp.Headers.TryGetValues("hash", out var values) || rsp.Headers.TryGetValues("Hash", out values))
                             {
                                 var hash = values.FirstOrDefault();
                                 if (!string.IsNullOrEmpty(hash))
@@ -929,7 +937,15 @@ namespace MajdataPlay
                             var currentHash = SHA256.Create().ComputeHash(fileStream);
                             if(fileSHA256 != Convert.ToBase64String(currentHash))
                             {
-                                continue;
+                                MajDebug.LogWarning($"Hash mismatch for online resource\nOrigin: {fileSHA256}\nLocal: {currentHash}");
+                                if (i == MajEnv.HTTP_REQUEST_MAX_RETRY)
+                                {
+                                    throw new HttpException(uri.OriginalString, HttpErrorCode.IntegrityCheckFailed);
+                                }
+                                else
+                                {
+                                    continue;
+                                }
                             }
                         }
                         
